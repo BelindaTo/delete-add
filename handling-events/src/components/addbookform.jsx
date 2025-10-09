@@ -16,17 +16,17 @@ export default function AddBookForm({ onSubmit, onCancel }) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(form); // per assignment: just close modal
+        onSubmit(form);
       }}
       className="book-form"
     >
       <div className="form-grid">
-        <label>Title<input name="title" value={form.title} onChange={update} required /></label>
-        <label>Author<input name="author" value={form.author} onChange={update} required /></label>
-        <label>Publisher<input name="publisher" value={form.publisher} onChange={update} required /></label>
-        <label>Publication year<input name="year" type="number" inputMode="numeric" value={form.year} onChange={update} required /></label>
-        <label>Language<input name="language" value={form.language} onChange={update} required /></label>
-        <label>Pages<input name="pages" type="number" inputMode="numeric" value={form.pages} onChange={update} required /></label>
+        <label>Title<input name="title" value={form.title} onChange={update} /></label>
+        <label>Author<input name="author" value={form.author} onChange={update} /></label>
+        <label>Publisher<input name="publisher" value={form.publisher} onChange={update} /></label>
+        <label>Publication year<input name="year" type="number" inputMode="numeric" value={form.year} onChange={update} /></label>
+        <label>Language<input name="language" value={form.language} onChange={update} /></label>
+        <label>Pages<input name="pages" type="number" inputMode="numeric" value={form.pages} onChange={update} /></label>
       </div>
 
       <div className="modal-actions">

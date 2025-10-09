@@ -1,44 +1,46 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import "./App.css";
-import initialBooks from "../data/books.json";               
 import BookCard from "./components/bookcard.jsx";
 import AddButton from "./components/addbutton.jsx";
 import Modal from "./components/modal.jsx";
 import AddBookForm from "./components/addbookform.jsx";
 
 export default function App() {
-  // Give each book a stable id (prefer isbn13, fallback to local id)
-  const [books, setBooks] = useState(() =>
-    initialBooks.map((b, i) => ({ ...b, _id: b.isbn13 || `local-${i}` }))
-  );
+  const [books, setBooks] = useState([]); // start empty
+  const [open, setOpen] = useState(false);
 
-  // Track which books are selected (by id)
-  const [selectedIds, setSelectedIds] = useState(new Set());
+  const selectedBook = useMemo(() => books.find((b) => b.selected), [books]);
+  const selectedId = selectedBook?._id ?? null;
 
   const toggleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+    setBooks((prev) => {
+      const clicked = prev.find((b) => b._id === id);
+      const willSelect = clicked ? !clicked.selected : true;
+      return prev.map((b) =>
+        b._id === id ? { ...b, selected: willSelect } : { ...b, selected: false }
+      );
     });
   };
 
-  const removeBook = (id) => {
-    setBooks((prev) => prev.filter((b) => b._id !== id));
-    // also clear selection if it was selected
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  };
-
-  // Modal state for "Add"
-  const [open, setOpen] = useState(false);
-  const handleCreate = (formData) => {
-    // Per assignment: submitting should just close the modal (no add yet)
-    console.log("New book (not added by assignment):", formData);
+  const handleCreate = ({ title, author, url }) => {
+    const newBook = {
+      _id: `local-${Date.now()}`,
+      title: (title || "").trim() || "Untitled",
+      author: (author || "").trim(),
+      url: (url || "").trim(),
+      selected: false,
+    };
+    setBooks((prev) => [newBook, ...prev]);
     setOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (!selectedId) return;
+    setBooks((prev) => prev.filter((b) => b._id !== selectedId));
+  };
+
+  const handleUpdate = () => {
+    // intentionally empty (no-op)
   };
 
   return (
@@ -49,14 +51,30 @@ export default function App() {
 
       <main className="main">
         <div className="catalog-grid">
-          <AddButton onClick={() => setOpen(true)} />
+          {/* Control column */}
+          <div className="controls-column">
+            <AddButton onClick={() => setOpen(true)} />
+            <div className="controls-row">
+              <button className="btn" onClick={handleUpdate} disabled={!selectedId}>
+                Update
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDelete}
+                disabled={!selectedId}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+
+          {/* Book cards */}
           {books.map((b) => (
             <BookCard
               key={b._id}
               book={b}
-              selected={selectedIds.has(b._id)}
+              selected={!!b.selected}
               onToggleSelect={() => toggleSelect(b._id)}
-              onRemove={() => removeBook(b._id)}
             />
           ))}
         </div>
