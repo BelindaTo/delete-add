@@ -44,6 +44,8 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
   border-radius: 8px;
   border: 2px solid #e5e7eb;
   box-sizing: border-box;
+  position: relative;
+  z-index: 10;
 }
 
 .filters h3 {
@@ -64,6 +66,8 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+  z-index: 10;
 }
 
 .filter-group label {
@@ -87,6 +91,13 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 20px;
+  pointer-events: auto;
+}
+
+.filter-group select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f9fafb;
 }
 
 .filter-group select:focus {
@@ -395,6 +406,7 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
   border-radius: 8px;
   font-size: 14px;
   background: white;
+  color: var(--ink);
 }
 
 .book-form select {
@@ -453,6 +465,7 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
 .btn-secondary:hover { 
   background: #e5eaf0; 
 }
+
 /* Optional: stack on narrow screens */
 @media (max-width: 680px) {
   :root { --cols: 2; }

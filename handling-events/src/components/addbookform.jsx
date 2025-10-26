@@ -78,10 +78,10 @@ export default function AddBookForm({ onSubmit, onCancel, initialData = {} }) {
       </div>
 
       <div className="form-actions">
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+        <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn-primary">
           {initialData.title ? "Update" : "Create"}
         </button>
       </div>

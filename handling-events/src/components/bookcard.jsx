@@ -1,34 +1,31 @@
 import React from "react";
 
 export default function BookCard({ book, selected, onToggleSelect }) {
-  const cover = book.url || book.thumbnail || book.image || "";
+  // Safety check: if book is undefined, render nothing
+  if (!book) {
+    return null;
+  }
 
   return (
-    <article
+    <div
       className={`book-card ${selected ? "selected" : ""}`}
       onClick={onToggleSelect}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onToggleSelect();
-        }
-      }}
-      role="button"
-      aria-pressed={selected}
     >
-      <div className="book-image">
-        {cover ? (
-          <img src={cover} alt={`${book.title} cover`} />
-        ) : (
-          <span>No Image</span>
-        )}
-      </div>
-
-      <div className="book-meta">
-        <div className="book-price">{book.title}</div>
-        {book.author && <div className="book-price">{book.author}</div>}
-      </div>
-    </article>
+      <h3>{book.title || "Untitled"}</h3>
+      <p className="author">by {book.author || "Unknown"}</p>
+      {book.publisher && <p className="publisher">Publisher: {book.publisher}</p>}
+      {book.language && <p className="language">Language: {book.language}</p>}
+      {book.url && (
+        <a
+          href={book.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="book-link"
+        >
+          View Book
+        </a>
+      )}
+    </div>
   );
 }

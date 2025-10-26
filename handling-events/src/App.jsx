@@ -152,7 +152,7 @@ export default function App() {
             </div>
 
             {(filterPublisher || filterLanguage) && (
-              <button className="btn btn-clear" onClick={clearFilters}>
+              <button className="btn-clear" onClick={clearFilters}>
                 Clear Filters
               </button>
             )}
