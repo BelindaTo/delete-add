@@ -1,37 +1,89 @@
 import React, { useState } from "react";
 
-export default function AddBookForm({ onSubmit, onCancel }) {
-  const [form, setForm] = useState({
-    title: "",
-    author: "",
-    publisher: "",
-    year: "",
-    language: "",
-    pages: "",
-  });
+export default function AddBookForm({ onSubmit, onCancel, initialData = {} }) {
+  const [title, setTitle] = useState(initialData.title || "");
+  const [author, setAuthor] = useState(initialData.author || "");
+  const [url, setUrl] = useState(initialData.url || "");
+  const [publisher, setPublisher] = useState(initialData.publisher || "");
+  const [language, setLanguage] = useState(initialData.language || "");
 
-  const update = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({ title, author, url, publisher, language });
+  };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(form);
-      }}
-      className="book-form"
-    >
-      <div className="form-grid">
-        <label>Title<input name="title" value={form.title} onChange={update} /></label>
-        <label>Author<input name="author" value={form.author} onChange={update} /></label>
-        <label>Publisher<input name="publisher" value={form.publisher} onChange={update} /></label>
-        <label>Publication year<input name="year" type="number" inputMode="numeric" value={form.year} onChange={update} /></label>
-        <label>Language<input name="language" value={form.language} onChange={update} /></label>
-        <label>Pages<input name="pages" type="number" inputMode="numeric" value={form.pages} onChange={update} /></label>
+    <form onSubmit={handleSubmit} className="book-form">
+      <div className="form-group">
+        <label htmlFor="title">Title *</label>
+        <input
+          id="title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Book title"
+          required
+        />
       </div>
 
-      <div className="modal-actions">
-        <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
-        <button type="submit" className="btn-primary">Create</button>
+      <div className="form-group">
+        <label htmlFor="author">Author</label>
+        <input
+          id="author"
+          type="text"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          placeholder="Author name"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="publisher">Publisher</label>
+        <input
+          id="publisher"
+          type="text"
+          value={publisher}
+          onChange={(e) => setPublisher(e.target.value)}
+          placeholder="Publisher name"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="language">Language</label>
+        <select
+          id="language"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
+          <option value="">Select language</option>
+          <option value="English">English</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Chinese">Chinese</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="url">URL</label>
+        <input
+          id="url"
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://example.com"
+        />
+      </div>
+
+      <div className="form-actions">
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="submit" className="btn btn-primary">
+          {initialData.title ? "Update" : "Create"}
+        </button>
       </div>
     </form>
   );
