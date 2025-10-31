@@ -4,15 +4,18 @@ import BookCard from "./components/bookcard.jsx";
 import AddButton from "./components/addbutton.jsx";
 import Modal from "./components/modal.jsx";
 import AddBookForm from "./components/addbookform.jsx";
+import LoanForm from "./components/loanform.jsx";
+import LoansList from "./components/loanslist.jsx";
 
 export default function App() {
   const [books, setBooks] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [filterPublisher, setFilterPublisher] = useState("");
   const [filterLanguage, setFilterLanguage] = useState("");
+  const [view, setView] = useState("catalog");
 
-  // Load books from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("bookCatalog");
     if (stored) {
@@ -25,17 +28,33 @@ export default function App() {
     }
   }, []);
 
-  // Save books to localStorage whenever they change
+  useEffect(() => {
+    const stored = localStorage.getItem("bookLoans");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setLoans(parsed);
+      } catch (e) {
+        console.error("Failed to parse stored loans:", e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (books.length >= 0) {
       localStorage.setItem("bookCatalog", JSON.stringify(books));
     }
   }, [books]);
 
+  useEffect(() => {
+    if (loans.length >= 0) {
+      localStorage.setItem("bookLoans", JSON.stringify(loans));
+    }
+  }, [loans]);
+
   const selectedBook = useMemo(() => books.find((b) => b.selected), [books]);
   const selectedId = selectedBook?._id ?? null;
 
-  // Get unique publishers and languages for filters
   const publishers = useMemo(() => {
     const pubs = [...new Set(books.map((b) => b.publisher).filter(Boolean))];
     return pubs.sort();
@@ -46,14 +65,24 @@ export default function App() {
     return langs.sort();
   }, [books]);
 
-  // Filter books based on criteria
+  const booksWithLoanStatus = useMemo(() => {
+    return books.map((book) => ({
+      ...book,
+      onLoan: loans.some((loan) => loan.bookId === book._id)
+    }));
+  }, [books, loans]);
+
   const filteredBooks = useMemo(() => {
-    return books.filter((b) => {
+    return booksWithLoanStatus.filter((b) => {
       if (filterPublisher && b.publisher !== filterPublisher) return false;
       if (filterLanguage && b.language !== filterLanguage) return false;
       return true;
     });
-  }, [books, filterPublisher, filterLanguage]);
+  }, [booksWithLoanStatus, filterPublisher, filterLanguage]);
+
+  const availableBooks = useMemo(() => {
+    return books.filter((book) => !loans.some((loan) => loan.bookId === book._id));
+  }, [books, loans]);
 
   const toggleSelect = (id) => {
     setBooks((prev) => {
@@ -100,7 +129,28 @@ export default function App() {
 
   const handleDelete = () => {
     if (!selectedId) return;
+    setLoans((prev) => prev.filter((loan) => loan.bookId !== selectedId));
     setBooks((prev) => prev.filter((b) => b._id !== selectedId));
+  };
+
+  const handleCreateLoan = ({ borrower, bookId, weeks }) => {
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + weeks * 7);
+
+    const newLoan = {
+      id: `loan-${Date.now()}`,
+      borrower,
+      bookId,
+      loanDate: new Date().toISOString(),
+      dueDate: dueDate.toISOString(),
+      weeks
+    };
+
+    setLoans((prev) => [...prev, newLoan]);
+  };
+
+  const handleReturnBook = (loanId) => {
+    setLoans((prev) => prev.filter((loan) => loan.id !== loanId));
   };
 
   const clearFilters = () => {
@@ -115,104 +165,139 @@ export default function App() {
       </header>
 
       <main className="main">
-        {/* Filters Section */}
-        <div className="filters">
-          <h3>Filter Books</h3>
-          <div className="filter-controls">
-            <div className="filter-group">
-              <label htmlFor="filterPublisher">Publisher</label>
-              <select
-                id="filterPublisher"
-                value={filterPublisher}
-                onChange={(e) => setFilterPublisher(e.target.value)}
+        {view === "catalog" ? (
+          <>
+            <div className="loan-button-container">
+              <button
+                onClick={() => setView("loans")}
+                className="loan-management-btn"
               >
-                <option value="">All Publishers</option>
-                {publishers.map((pub) => (
-                  <option key={pub} value={pub}>
-                    {pub}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label htmlFor="filterLanguage">Language</label>
-              <select
-                id="filterLanguage"
-                value={filterLanguage}
-                onChange={(e) => setFilterLanguage(e.target.value)}
-              >
-                <option value="">All Languages</option>
-                {languages.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {lang}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {(filterPublisher || filterLanguage) && (
-              <button className="btn-clear" onClick={clearFilters}>
-                Clear Filters
+                Loan Management
               </button>
+            </div>
+
+            <div className="filters">
+              <h3>Filter Books</h3>
+              <div className="filter-controls">
+                <div className="filter-group">
+                  <label htmlFor="filterPublisher">Publisher</label>
+                  <select
+                    id="filterPublisher"
+                    value={filterPublisher}
+                    onChange={(e) => setFilterPublisher(e.target.value)}
+                  >
+                    <option value="">All Publishers</option>
+                    {publishers.map((pub) => (
+                      <option key={pub} value={pub}>
+                        {pub}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="filter-group">
+                  <label htmlFor="filterLanguage">Language</label>
+                  <select
+                    id="filterLanguage"
+                    value={filterLanguage}
+                    onChange={(e) => setFilterLanguage(e.target.value)}
+                  >
+                    <option value="">All Languages</option>
+                    {languages.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {(filterPublisher || filterLanguage) && (
+                  <button className="btn-clear" onClick={clearFilters}>
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="catalog-grid">
+              <div className="controls-column">
+                <AddButton onClick={() => setOpenAdd(true)} />
+                <div className="controls-row">
+                  <button
+                    className="btn"
+                    onClick={() => setOpenEdit(true)}
+                    disabled={!selectedId}
+                  >
+                    Update
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={handleDelete}
+                    disabled={!selectedId}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              {filteredBooks.map((b) => (
+                <BookCard
+                  key={b._id}
+                  book={b}
+                  selected={!!b.selected}
+                  onToggleSelect={() => toggleSelect(b._id)}
+                />
+              ))}
+            </div>
+
+            {filteredBooks.length === 0 && books.length > 0 && (
+              <p className="empty-message">
+                No books match the current filters.
+              </p>
             )}
-          </div>
-        </div>
 
-        <div className="catalog-grid">
-          {/* Control column */}
-          <div className="controls-column">
-            <AddButton onClick={() => setOpenAdd(true)} />
-            <div className="controls-row">
-              <button
-                className="btn"
-                onClick={() => setOpenEdit(true)}
-                disabled={!selectedId}
-              >
-                Update
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={!selectedId}
-              >
-                Delete
-              </button>
+            {books.length === 0 && (
+              <p className="empty-message">
+                No books yet. Click "Add Book" to get started!
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="loans-view">
+            <button
+              onClick={() => setView("catalog")}
+              className="close-loans-btn"
+            >
+              ✕
+            </button>
+
+            <div className="loan-form-container">
+              <LoanForm
+                availableBooks={availableBooks}
+                onSubmit={handleCreateLoan}
+              />
+            </div>
+
+            <div className="loans-list-container">
+              <h3 className="loans-list-title">
+                Active Loans ({loans.length})
+              </h3>
+              <LoansList
+                loans={loans}
+                books={books}
+                onReturn={handleReturnBook}
+              />
             </div>
           </div>
-
-          {/* Book cards */}
-          {filteredBooks.map((b) => (
-            <BookCard
-              key={b._id}
-              book={b}
-              selected={!!b.selected}
-              onToggleSelect={() => toggleSelect(b._id)}
-            />
-          ))}
-        </div>
-
-        {filteredBooks.length === 0 && books.length > 0 && (
-          <p style={{ textAlign: "center", color: "#7f8c8d", marginTop: "2rem" }}>
-            No books match the current filters.
-          </p>
-        )}
-
-        {books.length === 0 && (
-          <p style={{ textAlign: "center", color: "#7f8c8d", marginTop: "2rem" }}>
-            No books yet. Click "Add Book" to get started!
-          </p>
         )}
       </main>
 
       <footer className="footer">© Belinda To, 2025</footer>
 
-      {/* Add Book Modal */}
       <Modal open={openAdd} onClose={() => setOpenAdd(false)} title="Create a new book">
         <AddBookForm onSubmit={handleCreate} onCancel={() => setOpenAdd(false)} />
       </Modal>
 
-      {/* Edit Book Modal */}
       <Modal open={openEdit} onClose={() => setOpenEdit(false)} title="Edit book">
         <AddBookForm
           onSubmit={handleUpdate}
