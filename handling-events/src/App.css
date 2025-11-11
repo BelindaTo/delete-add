@@ -547,3 +547,123 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
     min-width: 100%;
   }
 }
+.book-details-view {
+  width: 100%;
+  max-width: 1100px;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 20px 28px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.close-details-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.close-details-btn:hover {
+  background: pink;
+}
+
+.book-details-top {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 18px;
+  margin-bottom: 32px;
+}
+
+.book-details-image {
+  width: 240px;
+  min-height: 320px;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-details-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.book-details-meta h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 28px;
+}
+
+.book-details-meta p {
+  margin: 4px 0;
+  font-size: 15px;
+}
+
+.book-details-similar h3 {
+  margin-bottom: 14px;
+}
+
+.similar-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.similar-book-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 210px;
+}
+
+.similar-book-img-wrap {
+  background: #f9fafb;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.similar-book-img-wrap img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.similar-book-info {
+  padding: 8px 10px 12px;
+}
+
+.similar-book-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.similar-book-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.error {
+  color: #b91c1c;
+  font-weight: 600;
+}

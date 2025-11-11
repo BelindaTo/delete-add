@@ -16,6 +16,12 @@ export default function App() {
   const [filterLanguage, setFilterLanguage] = useState("");
   const [view, setView] = useState("catalog");
 
+  // NEW: which book is being shown in “details” mode
+  const [detailsBook, setDetailsBook] = useState(null);
+  const [similarBooks, setSimilarBooks] = useState([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [similarError, setSimilarError] = useState("");
+
   useEffect(() => {
     const stored = localStorage.getItem("bookCatalog");
     if (stored) {
@@ -68,7 +74,7 @@ export default function App() {
   const booksWithLoanStatus = useMemo(() => {
     return books.map((book) => ({
       ...book,
-      onLoan: loans.some((loan) => loan.bookId === book._id)
+      onLoan: loans.some((loan) => loan.bookId === book._id),
     }));
   }, [books, loans]);
 
@@ -81,7 +87,9 @@ export default function App() {
   }, [booksWithLoanStatus, filterPublisher, filterLanguage]);
 
   const availableBooks = useMemo(() => {
-    return books.filter((book) => !loans.some((loan) => loan.bookId === book._id));
+    return books.filter(
+      (book) => !loans.some((loan) => loan.bookId === book._id)
+    );
   }, [books, loans]);
 
   const toggleSelect = (id) => {
@@ -94,7 +102,7 @@ export default function App() {
     });
   };
 
-  const handleCreate = ({ title, author, url, publisher, language }) => {
+  const handleCreate = ({ title, author, url, publisher, language, year, pages }) => {
     const newBook = {
       _id: `local-${Date.now()}`,
       title: (title || "").trim() || "Untitled",
@@ -102,13 +110,15 @@ export default function App() {
       url: (url || "").trim(),
       publisher: (publisher || "").trim(),
       language: (language || "").trim(),
+      year: (year || "").trim(),     // optional new fields
+      pages: (pages || "").trim(),
       selected: false,
     };
     setBooks((prev) => [newBook, ...prev]);
     setOpenAdd(false);
   };
 
-  const handleUpdate = ({ title, author, url, publisher, language }) => {
+  const handleUpdate = ({ title, author, url, publisher, language, year, pages }) => {
     if (!selectedId) return;
     setBooks((prev) =>
       prev.map((b) =>
@@ -120,6 +130,8 @@ export default function App() {
               url: (url || "").trim(),
               publisher: (publisher || "").trim(),
               language: (language || "").trim(),
+              year: (year || "").trim(),
+              pages: (pages || "").trim(),
             }
           : b
       )
@@ -143,7 +155,7 @@ export default function App() {
       bookId,
       loanDate: new Date().toISOString(),
       dueDate: dueDate.toISOString(),
-      weeks
+      weeks,
     };
 
     setLoans((prev) => [...prev, newLoan]);
@@ -156,6 +168,60 @@ export default function App() {
   const clearFilters = () => {
     setFilterPublisher("");
     setFilterLanguage("");
+  };
+
+  // ---------- DETAILS VIEW HANDLING ----------
+  const openDetailsView = (bookId) => {
+    const book = books.find((b) => b._id === bookId);
+    if (!book) return;
+
+    setDetailsBook(book);
+    setView("bookDetails");
+  };
+
+  // when detailsBook changes, fetch similar books
+  useEffect(() => {
+    const fetchSimilar = async () => {
+      if (!detailsBook) {
+        setSimilarBooks([]);
+        return;
+      }
+
+      // pick the best query we have
+      const query =
+        detailsBook.title?.trim() ||
+        detailsBook.author?.trim() ||
+        detailsBook.publisher?.trim() ||
+        "javascript";
+
+      setSimilarLoading(true);
+      setSimilarError("");
+      try {
+        const res = await fetch(
+          `https://api.itbook.store/1.0/search/${encodeURIComponent(query)}`
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load similar books");
+        }
+        const data = await res.json();
+        // API returns { error, total, page, books: [...] }
+        setSimilarBooks(data.books || []);
+      } catch (err) {
+        console.error(err);
+        setSimilarError("Unable to load similar books right now.");
+        setSimilarBooks([]);
+      } finally {
+        setSimilarLoading(false);
+      }
+    };
+
+    fetchSimilar();
+  }, [detailsBook]);
+
+  const closeDetailsView = () => {
+    setDetailsBook(null);
+    setSimilarBooks([]);
+    setView("catalog");
   };
 
   return (
@@ -246,6 +312,7 @@ export default function App() {
                   book={b}
                   selected={!!b.selected}
                   onToggleSelect={() => toggleSelect(b._id)}
+                  onShowDetails={() => openDetailsView(b._id)} // NEW
                 />
               ))}
             </div>
@@ -262,7 +329,7 @@ export default function App() {
               </p>
             )}
           </>
-        ) : (
+        ) : view === "loans" ? (
           <div className="loans-view">
             <button
               onClick={() => setView("catalog")}
@@ -289,16 +356,93 @@ export default function App() {
               />
             </div>
           </div>
-        )}
+        ) : view === "bookDetails" && detailsBook ? (
+          <div className="book-details-view">
+            <button
+              onClick={closeDetailsView}
+              className="close-details-btn"
+              aria-label="Close details"
+            >
+              ✕
+            </button>
+
+            <div className="book-details-top">
+              <div className="book-details-image">
+                {detailsBook.url ? (
+                  <img src={detailsBook.url} alt={detailsBook.title} />
+                ) : (
+                  <div className="book-details-placeholder">No cover</div>
+                )}
+              </div>
+              <div className="book-details-meta">
+                <h2>{detailsBook.title || "Untitled"}</h2>
+                {detailsBook.author && (
+                  <p><strong>Author:</strong> {detailsBook.author}</p>
+                )}
+                {detailsBook.publisher && (
+                  <p><strong>Publisher:</strong> {detailsBook.publisher}</p>
+                )}
+                <p>
+                  <strong>Publication Year:</strong>{" "}
+                  {detailsBook.year || "N/A"}
+                </p>
+                <p>
+                  <strong>Page Count:</strong>{" "}
+                  {detailsBook.pages || "N/A"}
+                </p>
+                {detailsBook.language && (
+                  <p><strong>Language:</strong> {detailsBook.language}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="book-details-similar">
+              <h3>Similar books</h3>
+              {similarLoading && <p>Loading similar books…</p>}
+              {similarError && <p className="error">{similarError}</p>}
+              {!similarLoading && !similarError && similarBooks.length === 0 && (
+                <p>No similar books found.</p>
+              )}
+              <div className="similar-books-grid">
+                {similarBooks.map((sb) => (
+                  <div key={sb.isbn13} className="similar-book-card">
+                    <div className="similar-book-img-wrap">
+                      {sb.image ? (
+                        <img src={sb.image} alt={sb.title} />
+                      ) : (
+                        <div className="similar-book-placeholder">No image</div>
+                      )}
+                    </div>
+                    <div className="similar-book-info">
+                      <p className="similar-book-title">{sb.title}</p>
+                      {sb.subtitle && (
+                        <p className="similar-book-subtitle">{sb.subtitle}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
 
       <footer className="footer">© Belinda To, 2025</footer>
 
-      <Modal open={openAdd} onClose={() => setOpenAdd(false)} title="Create a new book">
+      <Modal
+        open={openAdd}
+        onClose={() => setOpenAdd(false)}
+        title="Create a new book"
+      >
+        {/* you can add year/pages to the form if you want */}
         <AddBookForm onSubmit={handleCreate} onCancel={() => setOpenAdd(false)} />
       </Modal>
 
-      <Modal open={openEdit} onClose={() => setOpenEdit(false)} title="Edit book">
+      <Modal
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        title="Edit book"
+      >
         <AddBookForm
           onSubmit={handleUpdate}
           onCancel={() => setOpenEdit(false)}

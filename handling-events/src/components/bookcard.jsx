@@ -1,31 +1,40 @@
+// components/bookcard.jsx
 import React from "react";
 
-export default function BookCard({ book, selected, onToggleSelect }) {
-  // Safety check: if book is undefined, render nothing
-  if (!book) {
-    return null;
-  }
-
+export default function BookCard({
+  book,
+  selected,
+  onToggleSelect,
+  onShowDetails,
+}) {
   return (
     <div
       className={`book-card ${selected ? "selected" : ""}`}
       onClick={onToggleSelect}
     >
-      <h3>{book.title || "Untitled"}</h3>
-      <p className="author">by {book.author || "Unknown"}</p>
-      {book.publisher && <p className="publisher">Publisher: {book.publisher}</p>}
-      {book.language && <p className="language">Language: {book.language}</p>}
-      {book.url && (
-        <a
-          href={book.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="book-link"
-        >
-          View Book
-        </a>
-      )}
+      <div className="book-image">
+        {book.url ? (
+          <img src={book.url} alt={book.title} />
+        ) : (
+          <div className="book-details-placeholder">No cover</div>
+        )}
+      </div>
+      <div className="book-meta">
+        <h3>{book.title || "Untitled"}</h3>
+        {book.author && <p className="author">{book.author}</p>}
+        {book.publisher && <p className="publisher">{book.publisher}</p>}
+        {book.language && <p className="language">{book.language}</p>}
+      </div>
+      <button
+        type="button"
+        className="view-button"
+        onClick={(e) => {
+          e.stopPropagation(); // so it doesn’t toggle select
+          onShowDetails?.();
+        }}
+      >
+        View Details
+      </button>
     </div>
   );
 }
