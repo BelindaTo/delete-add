@@ -193,14 +193,18 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
 }
 
 /* Cards must match the track size */
-.book-card, .add-card {
+.book-card,
+.add-card {
   width: var(--card-w);
-  height: var(--card-h);
+  /* let the card grow, but keep a minimum height */
+  min-height: var(--card-h);
   box-sizing: border-box;
   border-radius: 8px;
   border: 3px solid #d7dbe2;
   background: var(--panel);
-  overflow: hidden;
+  /* allow extra content instead of cutting it off */
+  overflow-y: auto;      /* card can scroll if it gets really tall */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -208,6 +212,7 @@ body { background:#fff; color:var(--ink); font-family: system-ui, -apple-system,
   position: relative;
   cursor: pointer;
 }
+
 
 /* selection indicator */
 .book-card.selected {
